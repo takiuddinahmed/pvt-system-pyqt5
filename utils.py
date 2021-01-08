@@ -40,19 +40,25 @@ class SerialConnection():
         self.connection_btn.setText("DISCONNECT")
         self.connection_btn.setStyleSheet(
             f"background-color: {styles['danger_color']}")
+
+        show_status_thread(self.status_bar, "Device Connected");
     
     def disconnect(self):
         self.connection.close();
-
+        self.connected = False
         self.connection_btn.setText("CONNECT")
         self.connection_btn.setStyleSheet(
             f"background-color: {styles['primary_color']}")
+        show_status_thread(self.status_bar,"Device Disconnected!");
     
     def read_data_loop(self):
-
+        self.check_connection();
         while self.connected:
-
-            chunk_data = self.connection.readline()
+            try:
+                chunk_data = self.connection.readline();
+            except:
+                self.disconnect();
+                pass
             try:
                 self.read_raw_data += chunk_data.decode();
             except UnicodeDecodeError:
@@ -74,9 +80,9 @@ class SerialConnection():
                 sleep(.2)
 
     def check_connection(self):
-        if not self.connection.is_open():
+        if not self.connection.is_open:
             self.connected = False
-            self.connection_btn
+            self.disconnect();
 
     def extract_data(self, string_data):
         splited_arr = string_data.split(';')
@@ -130,10 +136,9 @@ def update_port_view(connection,port_selected_box):
         ports = connection.find_ports();
         port_selected_box.clear();
         if len(ports):
-            print(ports);
             for p in ports:
                 port_selected_box.addItem(p);
-        sleep(5)
+        sleep(2)
 
 def connection_btn_clicked(connection,btn,portBox,baudBox):
     if not connection.connected:
